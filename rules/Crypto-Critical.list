@@ -1,0 +1,72 @@
+# Crypto Critical
+# Manually curated high-confidence exchange routing rules.
+# This file is intentionally NOT auto-generated from upstream lists.
+#
+# Maintenance rules:
+# - Prefer DOMAIN-SUFFIX over DOMAIN-KEYWORD.
+# - Add only domains attributable to the platform with high confidence.
+# - Do not add shared CDN / CAPTCHA / analytics infrastructure just because
+#   it appears while an exchange app is running.
+# - CoinSpot / Swyftx / Coinbase AU are intentionally excluded from this
+#   Taiwan-oriented list and should use an Australia-specific policy/profile.
+
+# Binance
+DOMAIN-SUFFIX,binance.com
+DOMAIN-SUFFIX,binance.me
+DOMAIN-SUFFIX,binanceapi.com
+DOMAIN-SUFFIX,binancecnt.com
+DOMAIN-SUFFIX,bnbstatic.com
+DOMAIN-SUFFIX,bntrace.com
+DOMAIN-SUFFIX,bsappapi.cc
+DOMAIN-SUFFIX,bsappapi.com
+DOMAIN-SUFFIX,bscdnweb.com
+DOMAIN-SUFFIX,nftstatic.com
+
+# Bybit
+DOMAIN-SUFFIX,bybit.com
+DOMAIN-SUFFIX,bycsi.com
+DOMAIN-SUFFIX,bytick.com
+DOMAIN-SUFFIX,byapis.com
+DOMAIN-SUFFIX,bycbe.com
+DOMAIN-SUFFIX,bymj.io
+DOMAIN-SUFFIX,byabcde.com
+DOMAIN-SUFFIX,byapps.net
+DOMAIN-SUFFIX,byd3c3.com
+DOMAIN-SUFFIX,bybit.biz
+DOMAIN-SUFFIX,bybdc6.com
+DOMAIN-SUFFIX,bybit-global.com
+DOMAIN-SUFFIX,bybit.cloud
+DOMAIN-SUFFIX,bybitglobal.com
+
+# OKX
+DOMAIN-SUFFIX,okx.com
+DOMAIN-SUFFIX,okex.com
+DOMAIN-SUFFIX,okx-dns.com
+DOMAIN-SUFFIX,okx-dns1.com
+DOMAIN-SUFFIX,okx-dns2.com
+DOMAIN-SUFFIX,okx.ac
+DOMAIN-SUFFIX,okx.cab
+
+# Bitget
+DOMAIN-SUFFIX,bitget.com
+
+# MEXC
+DOMAIN-SUFFIX,mexc.com
+DOMAIN-SUFFIX,mexc.co
+DOMAIN-SUFFIX,mexcsensors.com
+
+# Gate
+DOMAIN-SUFFIX,gate.io
+DOMAIN-SUFFIX,gatedata.org
+DOMAIN-SUFFIX,gateimg.com
+DOMAIN-SUFFIX,gateio.live
+DOMAIN-SUFFIX,gateio.services
+
+# Kraken
+DOMAIN-SUFFIX,kraken.com
+DOMAIN-SUFFIX,kraken.onl
+
+# BIT / Matrixport
+DOMAIN-SUFFIX,bit.com
+DOMAIN-SUFFIX,matrixport.com
+DOMAIN-SUFFIX,matrixport.vip
