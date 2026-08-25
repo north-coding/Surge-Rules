@@ -84,8 +84,15 @@ jobs:
           EOF
           )"
 
-          if gh pr view "$BRANCH" --json number >/dev/null 2>&1; then
-            gh pr edit "$BRANCH" --title "$TITLE" --body "$BODY"
+          PR_NUMBER="$(gh pr list \
+            --state open \
+            --head "$BRANCH" \
+            --base main \
+            --json number \
+            --jq '.[0].number // empty')"
+
+          if [[ -n "$PR_NUMBER" ]]; then
+            gh pr edit "$PR_NUMBER" --title "$TITLE" --body "$BODY"
           else
             gh pr create \
               --base main \
