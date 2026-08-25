@@ -1,0 +1,94 @@
+name: Sync Loyalsoldier upstream
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Monday 06:30 Asia/Shanghai (Sunday 22:30 UTC).
+    - cron: "30 22 * * 0"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-loyalsoldier-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download and validate upstream rules
+        run: python scripts/sync_upstream.py
+
+      - name: Check for changes
+        id: changes
+        shell: bash
+        run: |
+          if git diff --quiet -- upstream; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No upstream changes."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat -- upstream
+          fi
+
+      - name: Create or refresh review PR
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BRANCH="bot/sync-loyalsoldier"
+          TITLE="chore: sync Loyalsoldier upstream"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$BRANCH"
+          git add upstream/
+          git commit -m "$TITLE"
+          git push --force origin "$BRANCH"
+
+          BODY="$(cat <<'EOF'
+          Automated upstream mirror refresh.
+
+          Sources:
+          - Loyalsoldier surge-rules `release/ruleset/proxy.txt`
+          - Loyalsoldier surge-rules `release/ruleset/direct.txt`
+          - Loyalsoldier surge-rules `release/ruleset/cncidr.txt`
+
+          This PR is intentionally **not auto-merged**.
+
+          Review the diff before merging, especially:
+          - unexpectedly large additions/deletions
+          - surprising routing changes
+          - abnormal file-size changes
+          - any syntax change in upstream data
+
+          `rules/Crypto-Critical.list` is not touched by this workflow.
+          EOF
+          )"
+
+          if gh pr view "$BRANCH" --json number >/dev/null 2>&1; then
+            gh pr edit "$BRANCH" --title "$TITLE" --body "$BODY"
+          else
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "$TITLE" \
+              --body "$BODY"
+          fi
