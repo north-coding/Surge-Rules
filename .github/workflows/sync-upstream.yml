@@ -2,6 +2,9 @@ name: Sync Loyalsoldier upstream
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
   schedule:
     # Monday 06:30 Asia/Shanghai (Sunday 22:30 UTC).
     - cron: "30 22 * * 0"
