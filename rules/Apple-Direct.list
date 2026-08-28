@@ -1,0 +1,65 @@
+# Apple Direct
+# Focused on Apple infrastructure where mainland DIRECT is normally beneficial:
+# App Store assets, iCloud / CloudKit, push, maps and OS/software updates.
+# This deliberately does NOT route all apple.com / Apple TV+ / Apple News DIRECT.
+# Baseline comes from the user's previously working Tower profile, with
+# Apple update / iCloud references cross-checked against v2fly/domain-list-community.
+
+# App Store / static assets
+DOMAIN-SUFFIX,aaplimg.com
+DOMAIN-SUFFIX,appstore.com
+DOMAIN-SUFFIX,apps.apple.com
+DOMAIN-SUFFIX,itunes.apple.com
+DOMAIN-SUFFIX,itunes.com
+DOMAIN-SUFFIX,mzstatic.com
+DOMAIN-SUFFIX,cdn-apple.com
+
+# Account / push / core service endpoints
+DOMAIN,appleid.apple.com
+DOMAIN,idmsa.apple.com
+DOMAIN-SUFFIX,push.apple.com
+DOMAIN-SUFFIX,apple-dns.net
+DOMAIN-SUFFIX,apple-mapkit.com
+DOMAIN-SUFFIX,apple.com.cn
+
+# iCloud / CloudKit
+DOMAIN-SUFFIX,apple-cloudkit.com
+DOMAIN-SUFFIX,icloud-content.com
+DOMAIN-SUFFIX,icloud.com
+DOMAIN-SUFFIX,icloud.com.cn
+DOMAIN-SUFFIX,me.com
+DOMAIN-SUFFIX,apple-icloud.cn
+DOMAIN-SUFFIX,appleicloud.cn
+DOMAIN-SUFFIX,icloud-apple.cn
+DOMAIN-SUFFIX,icloud-content.com.cn
+DOMAIN-SUFFIX,icloud.cn
+DOMAIN-SUFFIX,icloud.net.cn
+DOMAIN-SUFFIX,icloudapple.cn
+
+# iTunes mainland service aliases
+DOMAIN-SUFFIX,apple-itunes.cn
+DOMAIN-SUFFIX,itunes-apple.cn
+DOMAIN-SUFFIX,itunesapple.cn
+
+# Apple software / OS update infrastructure
+DOMAIN,appldnld.apple.com
+DOMAIN,configuration.apple.com
+DOMAIN,fcs-keys-pub-prod.cdn-apple.com
+DOMAIN,gdmf-ados.apple.com
+DOMAIN,gdmf.apple.com
+DOMAIN,gg.apple.com
+DOMAIN,gs.apple.com
+DOMAIN,gsra.apple.com
+DOMAIN,ig.apple.com
+DOMAIN,mesu.apple.com
+DOMAIN,oscdn.apple.com
+DOMAIN,osrecovery.apple.com
+DOMAIN,skl.apple.com
+DOMAIN,swcdn.apple.com
+DOMAIN,swdist.apple.com
+DOMAIN,swdownload.apple.com
+DOMAIN,swscan.apple.com
+DOMAIN,updates-http.cdn-apple.com
+DOMAIN,updates.cdn-apple.com
+DOMAIN,wkms-public.apple.com
+DOMAIN,xp.apple.com
