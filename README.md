@@ -83,6 +83,7 @@ Surge SYSTEM → DIRECT
 
 ACL4 UnBan → DIRECT
 ACL4 BanAD / BanProgramAD → REJECT
+ACL4 GoogleFCM → Node Select
 ACL4 GoogleCN / SteamCN → DIRECT
 
 v2fly category-cryptocurrency → Crypto / Taiwan
@@ -99,13 +100,13 @@ Surge GEOIP,CN → DIRECT
 FINAL → Node Select, dns-failed
 ```
 
-This intentionally follows ACL4's mature ordering principle: local/system safety first, unbreak/ad/direct exceptions early, service-specific overrides before the general foreign-proxy layer, `ProxyLite` before all China IP decisions, then China domain/company-IP/GeoIP fallbacks, and FINAL last.
+This intentionally follows ACL4's mature ordering principle: local/system safety first, unbreak/ad/direct exceptions early, GoogleFCM before the intentionally overlapping GoogleCN list, service-specific overrides before the general foreign-proxy layer, `ProxyLite` before all China IP decisions, then China domain/company-IP/GeoIP fallbacks, and FINAL last.
 
 Important details:
 
 - `SYSTEM` and `LAN` are Surge-maintained internal rule sets and may improve as Surge itself updates.
 - `GEOIP,CN` uses Surge's auto-updated MaxMind country database and handles both IPv4 and IPv6, so V0.4 no longer needs separate production China IPv4/IPv6 CIDR subscriptions.
-- Crypto, AI, Netflix, Apple, Microsoft and ProxyLite use `extended-matching` where useful so TLS SNI / HTTP Host can still classify connections whose target is an IP literal.
+- Crypto, AI, Netflix, Apple, Microsoft, GoogleFCM and ProxyLite use `extended-matching` where useful so TLS SNI / HTTP Host can still classify connections whose target is an IP literal.
 - `FINAL,Node Select,dns-failed` lets the Hong Kong proxy resolve an otherwise-unmatched hostname remotely when local DNS fails during GeoIP evaluation.
 - domain/service rules stay above the GeoIP fallback.
 - AI stays above Microsoft so Copilot traffic follows the AI policy instead of the broader Microsoft policy.
@@ -116,10 +117,12 @@ V0.4 minimizes locally maintained classification rules:
 
 - v2fly `category-cryptocurrency` via Geosite2Surge for Crypto;
 - v2fly `category-ai-!cn` via Geosite2Surge for AI;
-- ACL4SSR for Netflix, Apple, Microsoft, ProxyLite, GoogleCN, SteamCN, ChinaDomain, ChinaCompanyIp, UnBan and ad rules;
+- ACL4SSR for Netflix, Apple, Microsoft, ProxyLite, GoogleFCM, GoogleCN, SteamCN, ChinaDomain, ChinaCompanyIp, UnBan and ad rules;
 - Surge's own SYSTEM, LAN and auto-updated GeoIP database for platform/network baselines.
 
 Geosite2Surge is a mechanical converter that refreshes from `v2fly/domain-list-community` on a daily workflow, allowing Surge to consume v2fly categories without us copying hundreds of domains locally.
+
+Telegram and ACL4 ProxyMedia are intentionally not loaded: in this profile they would route to the same `Node Select`/Hong Kong outcome as ordinary foreign traffic, while adding broader classification and another runtime dependency. Netflix remains explicit because it has a genuinely distinct selectable regional policy. GoogleFCM is kept because its precedence over GoogleCN changes behavior.
 
 The old local `rules/Crypto-Critical.list`, `rules/AI.list`, `rules/Netflix.list`, Apple/Microsoft focused lists and mirrored Loyalsoldier/ChinaIPv6 data may remain useful as historical/reference material, but V0.4 production routing does not depend on them.
 
@@ -134,7 +137,8 @@ Before making a newly exported profile the daily profile, verify in Surge that:
 3. `AI` resolves through Taiwan in normal conditions and can fall back to Japan;
 4. Apple system traffic such as `*.ls.apple.com` is DIRECT;
 5. ordinary Google traffic uses Hong Kong while GoogleCN-only traffic remains DIRECT;
-6. a normal mainland service is DIRECT and an unmatched foreign service falls to Hong Kong.
+6. GoogleFCM/mtalk follows `Node Select` instead of being caught by GoogleCN;
+7. a normal mainland service is DIRECT and an unmatched foreign service falls to Hong Kong.
 
 This validation matters because Surge substitutes DIRECT if a policy group ends up with no usable members; the regex-built country groups therefore must be checked once after a new node naming scheme or airport is introduced.
 
