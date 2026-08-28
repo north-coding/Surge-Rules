@@ -1,36 +1,39 @@
 [Rule]
-# Surge owns routing rules from here. Tower only owns proxies and policy groups.
-# Remote RULE-SET resources are cached and refreshed by Surge.
+# Surge owns production routing rules. Tower only supplies concrete proxies.
+# External RULE-SET resources are cached and refreshed by Surge.
 
-# Surge-maintained system/LAN safety baseline.
+# Surge-maintained internal safety baselines.
 RULE-SET,SYSTEM,DIRECT
+RULE-SET,LAN,DIRECT,no-resolve
 
-# High-priority service routing. Crypto comes directly from v2fly's
-# category-cryptocurrency, converted daily to Surge syntax by Geosite2Surge.
-RULE-SET,https://raw.githubusercontent.com/ImpXada/Geosite2Surge/refs/heads/main/data/category-cryptocurrency,Crypto,update-interval=86400
-RULE-SET,https://raw.githubusercontent.com/north-coding/Surge-Rules/main/rules/AI.list,AI,update-interval=86400
-RULE-SET,https://raw.githubusercontent.com/north-coding/Surge-Rules/main/rules/Netflix.list,Netflix,update-interval=86400
+# High-priority service routing.
+# Crypto comes from v2fly category-cryptocurrency, converted daily to Surge syntax.
+# extended-matching also checks TLS SNI and HTTP Host/:authority, useful when apps connect to IP literals.
+RULE-SET,https://raw.githubusercontent.com/ImpXada/Geosite2Surge/refs/heads/main/data/category-cryptocurrency,Crypto,extended-matching,update-interval=86400
+RULE-SET,https://raw.githubusercontent.com/north-coding/Surge-Rules/main/rules/AI.list,AI,extended-matching,update-interval=86400
+RULE-SET,https://raw.githubusercontent.com/north-coding/Surge-Rules/main/rules/Netflix.list,Netflix,extended-matching,update-interval=86400
 
-# ACL4SSR Mini-style direct / ad decisions.
+# ACL4SSR direct / ad decisions.
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/UnBan.list,DIRECT,update-interval=86400
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list,REJECT,update-interval=86400
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanProgramAD.list,REJECT,update-interval=86400
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/GoogleCN.list,DIRECT,update-interval=86400
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/SteamCN.list,DIRECT,update-interval=86400
 
-# Mature ACL4SSR service classification. Policy defaults are controlled by our groups.
-RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Microsoft.list,Microsoft,update-interval=86400
-RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Apple.list,Apple,update-interval=86400
+# Mature ACL4SSR service classification. Our groups decide the route.
+RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Microsoft.list,Microsoft,extended-matching,update-interval=86400
+RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Apple.list,Apple,extended-matching,update-interval=86400
 
 # Force known foreign / blocked services to proxy before any China-IP decision.
-RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ProxyLite.list,Node Select,update-interval=86400
+RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ProxyLite.list,Node Select,extended-matching,update-interval=86400
 
 # China direct classification follows the proxy-exception layer.
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaDomain.list,DIRECT,update-interval=86400
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaCompanyIp.list,DIRECT,update-interval=86400
 
-# Reviewed CN IP fallbacks. Keep IP rules below domain/service rules.
+# CN IP fallbacks stay below all domain/service classification.
 RULE-SET,https://raw.githubusercontent.com/north-coding/Surge-Rules/main/upstream/cncidr.txt,DIRECT,update-interval=604800
 RULE-SET,https://raw.githubusercontent.com/Centralmatrix3/Matrix-io/454b1ba7b608d4879b3d01d743ca1e8febc1455c/Ruleset/Surge/ChinaIPv6.list,DIRECT,update-interval=604800
 
-FINAL,Node Select
+# If local DNS fails during an IP-rule lookup, let the proxy resolve the unmatched hostname remotely.
+FINAL,Node Select,dns-failed
