@@ -1,33 +1,41 @@
-# Apple Direct
-# Focused on Apple infrastructure where mainland DIRECT is normally beneficial:
-# App Store assets, iCloud / CloudKit, push, maps and OS/software updates.
-# This deliberately does NOT route all apple.com / Apple TV+ / Apple News DIRECT.
-# Baseline comes from the user's previously working Tower profile, with
-# Apple update / iCloud references cross-checked against v2fly/domain-list-community.
+# Apple Essential Direct
+# Focused on Apple infrastructure where mainland DIRECT is normally beneficial.
+# This is intentionally NOT a blanket `apple.com` rule: Apple TV+, News and other
+# region-sensitive content remain on the ordinary overseas route unless explicitly listed.
+# Cross-checked against Apple's current enterprise-network requirements.
 
-# App Store / static assets
-DOMAIN-SUFFIX,aaplimg.com
-DOMAIN-SUFFIX,appstore.com
-DOMAIN-SUFFIX,apps.apple.com
-DOMAIN-SUFFIX,itunes.apple.com
-DOMAIN-SUFFIX,itunes.com
-DOMAIN-SUFFIX,mzstatic.com
-DOMAIN-SUFFIX,cdn-apple.com
-
-# Account / push / core service endpoints
+# Time / identity / trust
+DOMAIN,time.apple.com
+DOMAIN,time-macos.apple.com
+DOMAIN,account.apple.com
 DOMAIN,appleid.apple.com
 DOMAIN,idmsa.apple.com
+DOMAIN,gsa.apple.com
+DOMAIN,certs.apple.com
+DOMAIN,crl.apple.com
+DOMAIN,ocsp.apple.com
+DOMAIN,ocsp2.apple.com
+
+# Push / DNS / maps
 DOMAIN-SUFFIX,push.apple.com
 DOMAIN-SUFFIX,apple-dns.net
 DOMAIN-SUFFIX,apple-mapkit.com
 DOMAIN-SUFFIX,apple.com.cn
 
-# iCloud / CloudKit
+# iCloud / CloudKit / iWork
 DOMAIN-SUFFIX,apple-cloudkit.com
-DOMAIN-SUFFIX,icloud-content.com
+DOMAIN-SUFFIX,apple-livephotoskit.com
+DOMAIN-SUFFIX,apzones.com
+DOMAIN-SUFFIX,cdn-apple.com
+DOMAIN-SUFFIX,gc.apple.com
 DOMAIN-SUFFIX,icloud.com
 DOMAIN-SUFFIX,icloud.com.cn
+DOMAIN-SUFFIX,icloud.apple.com
+DOMAIN-SUFFIX,icloud-content.com
+DOMAIN-SUFFIX,iwork.apple.com
 DOMAIN-SUFFIX,me.com
+
+# Mainland iCloud aliases
 DOMAIN-SUFFIX,apple-icloud.cn
 DOMAIN-SUFFIX,appleicloud.cn
 DOMAIN-SUFFIX,icloud-apple.cn
@@ -36,7 +44,13 @@ DOMAIN-SUFFIX,icloud.cn
 DOMAIN-SUFFIX,icloud.net.cn
 DOMAIN-SUFFIX,icloudapple.cn
 
-# iTunes mainland service aliases
+# App Store / iTunes / static assets
+DOMAIN-SUFFIX,aaplimg.com
+DOMAIN-SUFFIX,appstore.com
+DOMAIN-SUFFIX,apps.apple.com
+DOMAIN-SUFFIX,itunes.apple.com
+DOMAIN-SUFFIX,itunes.com
+DOMAIN-SUFFIX,mzstatic.com
 DOMAIN-SUFFIX,apple-itunes.cn
 DOMAIN-SUFFIX,itunes-apple.cn
 DOMAIN-SUFFIX,itunesapple.cn
