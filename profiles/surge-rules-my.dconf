@@ -5,8 +5,9 @@
 # Surge-maintained system/LAN safety baseline.
 RULE-SET,SYSTEM,DIRECT
 
-# Owner-controlled high-priority routing. These must stay before ACL4SSR ProxyLite.
-RULE-SET,https://raw.githubusercontent.com/north-coding/Surge-Rules/main/rules/Crypto-Critical.list,Crypto Critical,update-interval=86400
+# High-priority service routing. Crypto comes directly from v2fly's
+# category-cryptocurrency, converted daily to Surge syntax by Geosite2Surge.
+RULE-SET,https://raw.githubusercontent.com/ImpXada/Geosite2Surge/refs/heads/main/data/category-cryptocurrency,Crypto,update-interval=86400
 RULE-SET,https://raw.githubusercontent.com/north-coding/Surge-Rules/main/rules/AI.list,AI,update-interval=86400
 RULE-SET,https://raw.githubusercontent.com/north-coding/Surge-Rules/main/rules/Netflix.list,Netflix,update-interval=86400
 
