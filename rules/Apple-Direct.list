@@ -1,26 +1,37 @@
 # Apple Essential Direct
-# Focused on Apple infrastructure where mainland DIRECT is normally beneficial.
-# This is intentionally NOT a blanket `apple.com` rule: Apple TV+, News and other
-# region-sensitive content remain on the ordinary overseas route unless explicitly listed.
-# Cross-checked against Apple's current enterprise-network requirements.
+# Focused on Apple infrastructure that should stay DIRECT in mainland China:
+# device setup, time sync, Apple Account, APNs, iCloud / CloudKit, App Store,
+# software updates and certificate validation.
+# Primary reference: Apple support article 101555 (enterprise network hosts/ports).
+# Deliberately does NOT use DOMAIN-SUFFIX,apple.com, so region-sensitive Apple
+# content services can still follow the ordinary overseas policy.
 
-# Time / identity / trust
+# Device setup / activation / captive portal
+DOMAIN,albert.apple.com
+DOMAIN,captive.apple.com
+DOMAIN,gs.apple.com
+DOMAIN,humb.apple.com
+DOMAIN,static.ips.apple.com
+DOMAIN,sq-device.apple.com
+DOMAIN,tbsc.apple.com
+
+# Time sync (UDP 123)
+DOMAIN,time-ios.apple.com
 DOMAIN,time.apple.com
 DOMAIN,time-macos.apple.com
+
+# Apple Push / device management
+DOMAIN-SUFFIX,push.apple.com
+DOMAIN,deviceenrollment.apple.com
+DOMAIN,deviceservices-external.apple.com
+DOMAIN,gdmf.apple.com
+
+# Apple Account / authentication
 DOMAIN,account.apple.com
 DOMAIN,appleid.apple.com
+DOMAIN,appleid.cdn-apple.com
 DOMAIN,idmsa.apple.com
 DOMAIN,gsa.apple.com
-DOMAIN,certs.apple.com
-DOMAIN,crl.apple.com
-DOMAIN,ocsp.apple.com
-DOMAIN,ocsp2.apple.com
-
-# Push / DNS / maps
-DOMAIN-SUFFIX,push.apple.com
-DOMAIN-SUFFIX,apple-dns.net
-DOMAIN-SUFFIX,apple-mapkit.com
-DOMAIN-SUFFIX,apple.com.cn
 
 # iCloud / CloudKit / iWork
 DOMAIN-SUFFIX,apple-cloudkit.com
@@ -30,12 +41,12 @@ DOMAIN-SUFFIX,cdn-apple.com
 DOMAIN-SUFFIX,gc.apple.com
 DOMAIN-SUFFIX,icloud.com
 DOMAIN-SUFFIX,icloud.com.cn
-DOMAIN-SUFFIX,icloud.apple.com
 DOMAIN-SUFFIX,icloud-content.com
 DOMAIN-SUFFIX,iwork.apple.com
+DOMAIN-SUFFIX,apple-dns.net
 DOMAIN-SUFFIX,me.com
 
-# Mainland iCloud aliases
+# Mainland iCloud aliases seen in existing production rule sets
 DOMAIN-SUFFIX,apple-icloud.cn
 DOMAIN-SUFFIX,appleicloud.cn
 DOMAIN-SUFFIX,icloud-apple.cn
@@ -44,25 +55,27 @@ DOMAIN-SUFFIX,icloud.cn
 DOMAIN-SUFFIX,icloud.net.cn
 DOMAIN-SUFFIX,icloudapple.cn
 
-# App Store / iTunes / static assets
+# App Store / App content
 DOMAIN-SUFFIX,aaplimg.com
 DOMAIN-SUFFIX,appstore.com
 DOMAIN-SUFFIX,apps.apple.com
 DOMAIN-SUFFIX,itunes.apple.com
 DOMAIN-SUFFIX,itunes.com
 DOMAIN-SUFFIX,mzstatic.com
+DOMAIN,ppq.apple.com
+DOMAIN,api.apple-cloudkit.com
+
+# Mainland iTunes aliases
 DOMAIN-SUFFIX,apple-itunes.cn
 DOMAIN-SUFFIX,itunes-apple.cn
 DOMAIN-SUFFIX,itunesapple.cn
 
-# Apple software / OS update infrastructure
+# Software / OS update infrastructure
 DOMAIN,appldnld.apple.com
 DOMAIN,configuration.apple.com
 DOMAIN,fcs-keys-pub-prod.cdn-apple.com
 DOMAIN,gdmf-ados.apple.com
-DOMAIN,gdmf.apple.com
 DOMAIN,gg.apple.com
-DOMAIN,gs.apple.com
 DOMAIN,gsra.apple.com
 DOMAIN,ig.apple.com
 DOMAIN,mesu.apple.com
@@ -77,3 +90,9 @@ DOMAIN,updates-http.cdn-apple.com
 DOMAIN,updates.cdn-apple.com
 DOMAIN,wkms-public.apple.com
 DOMAIN,xp.apple.com
+
+# Certificate / trust validation
+DOMAIN,certs.apple.com
+DOMAIN,crl.apple.com
+DOMAIN,ocsp.apple.com
+DOMAIN,ocsp2.apple.com
