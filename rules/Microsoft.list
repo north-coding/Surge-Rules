@@ -1,63 +1,76 @@
-# Microsoft
-# Focused on Teams, OneNote, Outlook, Microsoft 365 / Office, OneDrive,
-# SharePoint and account/authentication infrastructure.
-# Discovery/reference source: v2fly/domain-list-community data/microsoft + data/onedrive.
-# Intentionally avoids unrelated Xbox / Azure / developer product coverage.
+# Microsoft 365 Core
+# Narrow routing set for the family workload: Teams, Microsoft 365 / Office,
+# Outlook, OneDrive, SharePoint and authentication. It intentionally avoids a
+# blanket DOMAIN-SUFFIX,microsoft.com so unrelated Microsoft services can follow FINAL.
+# Primary reference: Microsoft 365 URL and IP address ranges (current worldwide list).
 
-# Core identity / Microsoft 365
-DOMAIN-SUFFIX,microsoft.com
-DOMAIN-SUFFIX,microsoft365.com
+# Identity / authentication
 DOMAIN-SUFFIX,microsoftonline.com
 DOMAIN-SUFFIX,microsoftonline-p.com
-DOMAIN-SUFFIX,microsoftapp.net
-DOMAIN-SUFFIX,microsoftcloud.com
 DOMAIN-SUFFIX,msauth.net
 DOMAIN-SUFFIX,msftauth.net
 DOMAIN-SUFFIX,msftauthimages.net
 DOMAIN-SUFFIX,msidentity.com
-DOMAIN-SUFFIX,passport.net
-DOMAIN-SUFFIX,aka.ms
-DOMAIN-SUFFIX,svc.ms
-DOMAIN-SUFFIX,gfx.ms
-DOMAIN-SUFFIX,sfx.ms
+DOMAIN,login.live.com
+DOMAIN,account.live.com
 
-# Teams / Skype communications
+# Microsoft 365 / Office
+DOMAIN-SUFFIX,microsoft365.com
+DOMAIN-SUFFIX,office.com
+DOMAIN-SUFFIX,office.net
+DOMAIN-SUFFIX,office365.com
+DOMAIN,officeclient.microsoft.com
+DOMAIN,config.office.com
+DOMAIN-SUFFIX,svc.ms
+DOMAIN-SUFFIX,sfx.ms
+DOMAIN-SUFFIX,gfx.ms
+
+# Teams / Skype
+DOMAIN-SUFFIX,teams.cloud.microsoft
+DOMAIN-SUFFIX,teams.microsoft.com
 DOMAIN-SUFFIX,microsoftteams.com
+DOMAIN-SUFFIX,lync.com
 DOMAIN-SUFFIX,skype.com
 DOMAIN-SUFFIX,skype.net
 DOMAIN-SUFFIX,skypeassets.com
 DOMAIN-SUFFIX,skypeassets.net
 DOMAIN-SUFFIX,sfbassets.com
 DOMAIN-SUFFIX,sfbassets.net
-DOMAIN-SUFFIX,successwithteams.com
-
-# Office / OneNote
-DOMAIN-SUFFIX,office.com
-DOMAIN-SUFFIX,office.net
-DOMAIN-SUFFIX,office365.com
-DOMAIN-SUFFIX,onenote.com
-DOMAIN-SUFFIX,onenote.net
-DOMAIN-SUFFIX,msocdn.com
-DOMAIN-SUFFIX,msecnd.net
+DOMAIN,join.secure.skypeassets.com
+DOMAIN,mlccdnprod.azureedge.net
+DOMAIN,aka.ms
 
 # Outlook / mail
 DOMAIN-SUFFIX,outlook.com
 DOMAIN-SUFFIX,hotmail.com
 DOMAIN-SUFFIX,hotmail.net
-DOMAIN-SUFFIX,live.com
-DOMAIN-SUFFIX,live.net
 
-# OneDrive
+# OneDrive / SharePoint
 DOMAIN-SUFFIX,1drv.com
 DOMAIN-SUFFIX,1drv.ms
-DOMAIN-SUFFIX,livefilestore.com
-DOMAIN-SUFFIX,onedrive.co
-DOMAIN-SUFFIX,onedrive.co.uk
 DOMAIN-SUFFIX,onedrive.com
-DOMAIN-SUFFIX,onedrive.eu
-DOMAIN-SUFFIX,onedrive.net
-DOMAIN-SUFFIX,onedrive.org
-
-# SharePoint
 DOMAIN-SUFFIX,sharepoint.com
 DOMAIN-SUFFIX,sharepointonline.com
+DOMAIN,storage.live.com
+DOMAIN,admin.onedrive.com
+DOMAIN,g.live.com
+DOMAIN,oneclient.sfx.ms
+DOMAIN,spoprod-a.akamaihd.net
+
+# Windows notification / Microsoft 365 support endpoints used by the above apps
+DOMAIN-SUFFIX,wns.windows.com
+DOMAIN,keydelivery.mediaservices.windows.net
+DOMAIN,streaming.mediaservices.windows.net
+DOMAIN,adl.windows.com
+
+# Teams media networks. These are Microsoft's current Teams Optimize/Allow ranges.
+# Keep both IPv4 and IPv6 so native IPv6 clients do not fall through to FINAL.
+IP-CIDR,52.112.0.0/14,no-resolve
+IP-CIDR,52.122.0.0/15,no-resolve
+IP-CIDR6,2603:1027::/48,no-resolve
+IP-CIDR6,2603:1037::/48,no-resolve
+IP-CIDR6,2603:1047::/48,no-resolve
+IP-CIDR6,2603:1057::/48,no-resolve
+IP-CIDR6,2603:1063::/38,no-resolve
+IP-CIDR6,2620:1ec:6::/48,no-resolve
+IP-CIDR6,2620:1ec:40::/42,no-resolve
