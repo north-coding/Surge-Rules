@@ -9,7 +9,7 @@ The production profiles are intentionally small and opinionated:
 ```text
 specific service rules
     ↓
-China IPv4 / dual-stack GeoIP fallback
+China IPv4 / IPv6 fallback
     ↓
 FINAL → Hong Kong
 ```
@@ -32,7 +32,7 @@ The key idea is:
 - `rules/Netflix.list` — dedicated Netflix routing.
 - `rules/Apple-Direct.list` — Apple infrastructure where mainland DIRECT is normally beneficial; region-sensitive Apple media is deliberately not broadly forced DIRECT.
 
-### Reviewed upstream mirror
+### Reviewed upstream data
 
 From Loyalsoldier:
 
@@ -41,6 +41,8 @@ From Loyalsoldier:
 - `upstream/cncidr.txt`
 
 The first two are retained as reference/upstream data. `cncidr.txt` is used by the V0.2 profiles as the visible China IPv4 fallback.
+
+For China IPv6, V0.2 uses the Surge-specific `Centralmatrix3/Matrix-io` `ChinaIPv6.list`, pinned to reviewed commit `454b1ba7b608d4879b3d01d743ca1e8febc1455c` (3960 rules). Pinning prevents an upstream change from silently altering a generated profile. A follow-up upstream-sync change can mirror this list into this repository without changing the profile architecture.
 
 ## Tower profiles
 
@@ -62,8 +64,8 @@ Routing intent:
 - `🍎 Apple` → DIRECT by default for the focused Apple infrastructure list.
 - `🎞️ Netflix` → Hong Kong by default, with Singapore / US / Japan alternatives.
 - ordinary overseas traffic → Hong Kong.
-- China IPv4 → mirrored CN CIDR DIRECT.
-- IPv6 / IPv6-only China destinations → `GEOIP,CN` dual-stack safety net.
+- China IPv4 → reviewed CN CIDR DIRECT.
+- China IPv6 → reviewed, commit-pinned IPv6 CIDR ruleset DIRECT.
 
 ### Family Profile
 
@@ -80,7 +82,7 @@ Family intentionally omits Crypto Critical and keeps only the service choices ne
 - Netflix → Hong Kong by default;
 - Apple infrastructure → DIRECT;
 - Google / YouTube / Zoom and other unmatched overseas traffic → Hong Kong;
-- China → DIRECT fallback.
+- China IPv4 and IPv6 → DIRECT fallback.
 
 ## Country groups
 
@@ -128,7 +130,11 @@ ipv6-vif = auto
 
 This allows Surge to take over IPv6 only when the current network actually has working IPv6.
 
-The current V0.2 routing uses the reviewed IPv4 `cncidr.txt` plus Surge's built-in `GEOIP,CN` as a dual-stack safety net. A separately reviewed China IPv6 CIDR mirror can be added later without changing the higher-level profile architecture.
+All service/domain decisions stay above the China IPv4 and IPv6 fallback rules. This avoids an IP rule pre-empting a later domain rule and preserves the intended order:
+
+```text
+service domains → CN IPv4 → CN IPv6 → FINAL Hong Kong
+```
 
 ## Upstream update policy
 
@@ -143,6 +149,8 @@ The scheduled workflow:
 5. never auto-merges the PR.
 
 `rules/Crypto-Critical.list` is never touched by upstream sync.
+
+The pinned China IPv6 snapshot is intentionally not floating in V0.2. Moving it to a newer revision should be reviewed first; mirroring it through the same PR-gated upstream workflow is the planned next maintenance step.
 
 ## Critical-rule maintenance policy
 
