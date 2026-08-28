@@ -1,120 +1,164 @@
 # surge-rules
 
-Personal Surge routing rules with reviewed upstream sync and curated critical rules.
+Personal Surge routing rules and Tower-importable profile schemes.
 
-## Design
+## Runtime philosophy
 
-This repository deliberately separates two trust levels:
+The production profiles are intentionally small and opinionated:
 
-1. **Curated critical rules** — manually reviewed and changed only on purpose.
-2. **Upstream routing data** — mirrored from mature upstream projects, updated through a reviewable pull request rather than being pushed directly into production.
+```text
+specific service rules
+    ↓
+China IPv4 / dual-stack GeoIP fallback
+    ↓
+FINAL → Hong Kong
+```
 
-The first production-critical file is:
+A giant universal ruleset is not the runtime goal. The mirrored Loyalsoldier data remains useful as a reviewed upstream/reference source, but `proxy.txt` and `direct.txt` are **not loaded by the V0.2 Tower profiles**.
 
-- `rules/Crypto-Critical.list` — manually maintained exchange domains that must be routed through a stable crypto policy.
+The key idea is:
 
-The base routing mirror is sourced from [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules):
+- exceptions are explicit;
+- China traffic is identified near the bottom;
+- all otherwise-unmatched overseas traffic safely falls to Hong Kong.
+
+## Production rules
+
+### Manually curated / focused
+
+- `rules/Crypto-Critical.list` — high-confidence exchange domains; manual-only.
+- `rules/AI.list` — curated OpenAI, Claude, Gemini/DeepMind, xAI/Grok, Perplexity and Copilot coverage.
+- `rules/Microsoft.list` — Teams / OneNote / Outlook / Microsoft 365 / OneDrive / SharePoint focus.
+- `rules/Netflix.list` — dedicated Netflix routing.
+- `rules/Apple-Direct.list` — Apple infrastructure where mainland DIRECT is normally beneficial; region-sensitive Apple media is deliberately not broadly forced DIRECT.
+
+### Reviewed upstream mirror
+
+From Loyalsoldier:
 
 - `upstream/proxy.txt`
 - `upstream/direct.txt`
 - `upstream/cncidr.txt`
 
-## Recommended Surge rule order
+The first two are retained as reference/upstream data. `cncidr.txt` is used by the V0.2 profiles as the visible China IPv4 fallback.
 
-```ini
-[Rule]
+## Tower profiles
 
-RULE-SET,LAN,DIRECT,no-resolve
+Tower owns airport subscriptions, multi-airport node aggregation, country detection and final profile generation. Subscription URLs and proxy credentials remain local to Tower and are never stored in this repository.
 
-# Highest priority: explicitly reviewed sensitive services.
-RULE-SET,https://raw.githubusercontent.com/north-coding/surge-rules/main/rules/Crypto-Critical.list,🔐 Crypto
+### My Profile
 
-# Base routing: proxy decisions before direct decisions.
-RULE-SET,https://raw.githubusercontent.com/north-coding/surge-rules/main/upstream/proxy.txt,🚀 节点选择,force-remote-dns
-RULE-SET,https://raw.githubusercontent.com/north-coding/surge-rules/main/upstream/direct.txt,DIRECT
+Import in Tower:
 
-# IP fallback must stay below domain/ruleset routing and immediately above FINAL.
-RULE-SET,https://raw.githubusercontent.com/north-coding/surge-rules/main/upstream/cncidr.txt,DIRECT
-
-FINAL,🚀 节点选择,dns-failed
+```text
+https://raw.githubusercontent.com/north-coding/Surge-Rules/main/profiles/tower-my.ini
 ```
 
-`cncidr.txt` is intentionally near the bottom. This avoids placing an IP-based fallback above later domain-based rules.
+Routing intent:
+
+- `🔐 Crypto Critical` → manually selected concrete Taiwan node; no Hong Kong/DIRECT safety fallback.
+- `🤖 AI` → Taiwan latency group by default; Japan alternative; individual TW/JP nodes remain selectable.
+- `🪟 Microsoft` → DIRECT by default; Hong Kong can be selected if real-world Teams/Office performance is better.
+- `🍎 Apple` → DIRECT by default for the focused Apple infrastructure list.
+- `🎞️ Netflix` → Hong Kong by default, with Singapore / US / Japan alternatives.
+- ordinary overseas traffic → Hong Kong.
+- China IPv4 → mirrored CN CIDR DIRECT.
+- IPv6 / IPv6-only China destinations → `GEOIP,CN` dual-stack safety net.
+
+### Family Profile
+
+Import in Tower:
+
+```text
+https://raw.githubusercontent.com/north-coding/Surge-Rules/main/profiles/tower-family.ini
+```
+
+Family intentionally omits Crypto Critical and keeps only the service choices needed for normal family use:
+
+- AI → Taiwan by default;
+- Microsoft → DIRECT by default;
+- Netflix → Hong Kong by default;
+- Apple infrastructure → DIRECT;
+- Google / YouTube / Zoom and other unmatched overseas traffic → Hong Kong;
+- China → DIRECT fallback.
+
+## Country groups
+
+Both Tower schemes create latency-selected country groups across all enabled airport subscriptions:
+
+- Hong Kong
+- Taiwan
+- Japan
+- Singapore
+- United States
+- Korea
+
+They also keep an all-node manual toolbox group.
+
+Country groups are `url-test`; `Crypto Critical` is deliberately a manual `select` over concrete Taiwan nodes so normal latency fluctuations do not change the financial-account exit IP.
+
+## Tower export mode
+
+For reliability, the recommended initial setting is to keep Tower's **“优先使用规则集” disabled**.
+
+That means:
+
+1. Tower downloads this scheme and its referenced lists when you explicitly import/refresh it;
+2. Tower keeps those resources locally;
+3. the generated Surge profile contains the converted rules locally;
+4. normal Surge operation does not require GitHub to be reachable.
+
+This avoids making `raw.githubusercontent.com` a runtime dependency from mainland networks.
+
+Remote RULE-SET emission can still be enabled later if a smaller generated profile is preferred.
+
+## IPv6
+
+Both schemes declare:
+
+```ini
+ipv6 = true
+```
+
+Tower currently models this setting, but it does not emit Surge's advanced VIF setting. After exporting the final Surge profile, add this once under `[General]`:
+
+```ini
+ipv6-vif = auto
+```
+
+This allows Surge to take over IPv6 only when the current network actually has working IPv6.
+
+The current V0.2 routing uses the reviewed IPv4 `cncidr.txt` plus Surge's built-in `GEOIP,CN` as a dual-stack safety net. A separately reviewed China IPv6 CIDR mirror can be added later without changing the higher-level profile architecture.
 
 ## Upstream update policy
 
-Loyalsoldier publishes very frequently. This repository does **not** automatically promote every upstream change to `main`.
+Loyalsoldier publishes frequently. This repository does **not** automatically promote upstream changes to `main`.
 
 The scheduled workflow:
 
-1. downloads the three upstream files;
-2. performs basic sanity checks;
+1. downloads the selected upstream files;
+2. performs sanity checks;
 3. compares them with the current mirror;
-4. creates or refreshes a review branch/PR when something changed;
+4. creates or refreshes a review PR when something changed;
 5. never auto-merges the PR.
 
-This creates a stability boundary:
+`rules/Crypto-Critical.list` is never touched by upstream sync.
 
-```text
-Loyalsoldier
-    ↓
-scheduled check
-    ↓
-review PR
-    ↓
-manual merge
-    ↓
-Surge
-```
+## Critical-rule maintenance policy
 
-## Crypto-Critical maintenance policy
+For sensitive manually curated lists:
 
-`Crypto-Critical.list` is never overwritten by an upstream sync.
+- prefer `DOMAIN-SUFFIX` / exact `DOMAIN`;
+- use a narrow `DOMAIN-KEYWORD` only when there is a clear technical reason;
+- do not add generic shared CDN, CAPTCHA, analytics or payment infrastructure merely because an app touched it.
 
-Rules should be added only when the domain is attributable to the target platform with high confidence.
-
-Prefer:
-
-```text
-DOMAIN-SUFFIX,example.com
-```
-
-Avoid broad keywords unless there is a strong reason:
-
-```text
-DOMAIN-KEYWORD,example
-```
-
-Do **not** add shared infrastructure merely because it appears while an exchange app is open, for example:
-
-- `gstatic.com`
-- `recaptcha.net`
-- generic Cloudflare domains
-- generic analytics/CDN domains
-
-Those may be used by unrelated apps.
-
-## Deliberate exclusions
-
-CoinSpot, Swyftx and region-specific Coinbase AU routing are intentionally not included in the Taiwan-oriented `Crypto-Critical.list`. They should be handled by an Australia-specific routing policy/profile.
-
-## Manual upstream sync
-
-```bash
-python3 scripts/sync_upstream.py
-```
-
-The script downloads:
-
-- `https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/proxy.txt`
-- `https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/direct.txt`
-- `https://raw.githubusercontent.com/Loyalsoldier/surge-rules/release/ruleset/cncidr.txt`
+CoinSpot, Swyftx and Coinbase AU are deliberately excluded from the Taiwan-oriented Crypto Critical policy; they belong to the separate Australia profile/workflow.
 
 ## Security
 
-Do not commit:
+Never commit:
 
-- airport/subscription URLs or tokens
-- proxy node passwords
-- private profile credentials
-- MITM CA private material
+- airport/subscription URLs or tokens;
+- proxy node passwords;
+- private profile credentials;
+- MITM CA private material.
