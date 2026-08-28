@@ -7,7 +7,7 @@ Personal Surge routing rules and Tower-importable bootstrap schemes.
 The production boundary is intentionally simple:
 
 - **Tower** owns airport subscriptions, multi-airport aggregation and concrete `[Proxy]` entries.
-- **Surge** owns policy groups, Smart selection, fallback behavior, built-in rule sets and production routing.
+- **Surge** owns policy groups, Smart selection, fallback behavior, built-in rule sets, GeoIP and production routing.
 - **GitHub** stores public routing templates and owner-maintained service rules; no subscription URL, node credential or secret belongs here.
 
 After Tower exports a profile, its generated `[Proxy Group]` and `[Rule]` sections are discarded. Surge uses the local policy-group template plus a remotely included rule section.
@@ -21,7 +21,7 @@ Surge include-all-proxies + regex
       ↓
 Smart country pools / service groups
       ↓
-Surge RULE-SET routing
+Surge RULE-SET / GeoIP routing
 ```
 
 ## My Profile
@@ -91,18 +91,18 @@ ACL4 Apple → Apple
 ACL4 ProxyLite → Node Select
 ACL4 ChinaDomain → DIRECT
 ACL4 ChinaCompanyIp → DIRECT
+Surge GEOIP,CN → DIRECT
 
-China IPv4 fallback → DIRECT
-China IPv6 fallback → DIRECT
 FINAL → Node Select, dns-failed
 ```
 
 Important details:
 
 - `SYSTEM` and `LAN` are Surge-maintained internal rule sets and may improve as Surge itself updates.
+- `GEOIP,CN` uses Surge's auto-updated MaxMind country database and handles both IPv4 and IPv6, so V0.4 no longer needs separate production China IPv4/IPv6 CIDR subscriptions.
 - Crypto, AI, Netflix, Apple, Microsoft and ProxyLite use `extended-matching` where useful so TLS SNI / HTTP Host can still classify connections whose target is an IP literal.
-- `FINAL,Node Select,dns-failed` lets the Hong Kong proxy resolve an otherwise-unmatched hostname remotely when local DNS fails during IP-rule evaluation.
-- domain/service rules stay above China IP fallbacks.
+- `FINAL,Node Select,dns-failed` lets the Hong Kong proxy resolve an otherwise-unmatched hostname remotely when local DNS fails during GeoIP evaluation.
+- domain/service rules stay above the GeoIP fallback.
 
 ## Crypto source
 
@@ -118,8 +118,9 @@ V0.4 directly follows mature upstream classification where appropriate:
 
 - v2fly `category-cryptocurrency` via Geosite2Surge;
 - ACL4SSR for Apple, Microsoft, ProxyLite, GoogleCN, ChinaDomain, ChinaCompanyIp and selected direct/ad lists;
-- reviewed China IPv4 mirror in `upstream/cncidr.txt`;
-- commit-pinned China IPv6 rules from Centralmatrix3/Matrix-io.
+- Surge's own SYSTEM, LAN and auto-updated GeoIP database for platform/network baselines.
+
+The mirrored Loyalsoldier data and the previously pinned ChinaIPv6 list may remain useful as references, but they are not required by V0.4 production routing.
 
 Public low-risk classification can update automatically in Surge. High-risk secrets and airport subscriptions never enter GitHub.
 
