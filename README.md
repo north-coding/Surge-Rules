@@ -1,166 +1,127 @@
 # surge-rules
 
-Personal Surge routing rules and Tower-importable profile schemes.
+Personal Surge routing rules and Tower-importable bootstrap schemes.
 
-## Runtime philosophy
+## V0.4 architecture
 
-The production profiles are intentionally small and opinionated:
+The production boundary is intentionally simple:
+
+- **Tower** owns airport subscriptions, multi-airport aggregation and concrete `[Proxy]` entries.
+- **Surge** owns policy groups, Smart selection, fallback behavior, built-in rule sets and production routing.
+- **GitHub** stores public routing templates and owner-maintained service rules; no subscription URL, node credential or secret belongs here.
+
+After Tower exports a profile, its generated `[Proxy Group]` and `[Rule]` sections are discarded. Surge uses the local policy-group template plus a remotely included rule section.
 
 ```text
-specific service rules
-    ↓
-China IPv4 / IPv6 fallback
-    ↓
-FINAL → Hong Kong
+Tower subscriptions
+      ↓
+concrete [Proxy] entries
+      ↓
+Surge include-all-proxies + regex
+      ↓
+Smart country pools / service groups
+      ↓
+Surge RULE-SET routing
 ```
 
-A giant universal ruleset is not the runtime goal. The mirrored Loyalsoldier data remains useful as a reviewed upstream/reference source, but `proxy.txt` and `direct.txt` are **not loaded by the V0.2 Tower profiles**.
+## My Profile
 
-The key idea is:
-
-- exceptions are explicit;
-- China traffic is identified near the bottom;
-- all otherwise-unmatched overseas traffic safely falls to Hong Kong.
-
-## Production rules
-
-### Manually curated / focused
-
-- `rules/Crypto-Critical.list` — high-confidence exchange domains; manual-only.
-- `rules/AI.list` — curated OpenAI, Claude, Gemini/DeepMind, xAI/Grok, Perplexity and Copilot coverage.
-- `rules/Microsoft.list` — Teams / OneNote / Outlook / Microsoft 365 / OneDrive / SharePoint focus.
-- `rules/Netflix.list` — dedicated Netflix routing.
-- `rules/Apple-Direct.list` — Apple infrastructure where mainland DIRECT is normally beneficial; region-sensitive Apple media is deliberately not broadly forced DIRECT.
-
-### Reviewed upstream data
-
-From Loyalsoldier:
-
-- `upstream/proxy.txt`
-- `upstream/direct.txt`
-- `upstream/cncidr.txt`
-
-The first two are retained as reference/upstream data. `cncidr.txt` is used by the V0.2 profiles as the visible China IPv4 fallback.
-
-For China IPv6, V0.2 uses the Surge-specific `Centralmatrix3/Matrix-io` `ChinaIPv6.list`, pinned to reviewed commit `454b1ba7b608d4879b3d01d743ca1e8febc1455c` (3960 rules). Pinning prevents an upstream change from silently altering a generated profile. A follow-up upstream-sync change can mirror this list into this repository without changing the profile architecture.
-
-## Tower profiles
-
-Tower owns airport subscriptions, multi-airport node aggregation, country detection and final profile generation. Subscription URLs and proxy credentials remain local to Tower and are never stored in this repository.
-
-### My Profile
-
-Import in Tower:
+Tower bootstrap:
 
 ```text
 https://raw.githubusercontent.com/north-coding/Surge-Rules/main/profiles/tower-my.ini
 ```
 
-Routing intent:
+After export:
 
-- `🔐 Crypto Critical` → manually selected concrete Taiwan node; no Hong Kong/DIRECT safety fallback.
-- `🤖 AI` → Taiwan latency group by default; Japan alternative; individual TW/JP nodes remain selectable.
-- `🪟 Microsoft` → DIRECT by default; Hong Kong can be selected if real-world Teams/Office performance is better.
-- `🍎 Apple` → DIRECT by default for the focused Apple infrastructure list.
-- `🎞️ Netflix` → Hong Kong by default, with Singapore / US / Japan alternatives.
-- ordinary overseas traffic → Hong Kong.
-- China IPv4 → reviewed CN CIDR DIRECT.
-- China IPv6 → reviewed, commit-pinned IPv6 CIDR ruleset DIRECT.
+1. keep Tower's `[Proxy]` section;
+2. replace `[Proxy Group]` with `profiles/surge-groups-my.conf`;
+3. replace `[Rule]` with:
 
-### Family Profile
+```ini
+[Rule]
+#!include https://raw.githubusercontent.com/north-coding/Surge-Rules/main/profiles/surge-rules-my.dconf
+```
 
-Import in Tower:
+4. confirm `[General]` contains:
+
+```ini
+ipv6 = true
+ipv6-vif = auto
+```
+
+### Policy intent
+
+- `Node Select` defaults to the Hong Kong Smart pool.
+- `AI` is a Surge `fallback`: Taiwan Smart first, Japan Smart second.
+- `Crypto` is a manual `select` over concrete Taiwan proxies only, plus `REJECT`; select one concrete Taiwan node and keep it pinned when a stable exchange exit IP matters.
+- `Microsoft` defaults DIRECT with Hong Kong available manually.
+- `Apple` defaults DIRECT with Hong Kong available manually.
+- `Netflix` defaults Hong Kong with Singapore / US / Japan alternatives.
+- country groups are native Surge `smart` groups populated with `include-all-proxies=true` and `policy-regex-filter`.
+- `Manual Select` automatically contains every concrete proxy.
+
+## Family Profile
+
+Tower bootstrap:
 
 ```text
 https://raw.githubusercontent.com/north-coding/Surge-Rules/main/profiles/tower-family.ini
 ```
 
-Family intentionally omits Crypto Critical and keeps only the service choices needed for normal family use:
+Use `profiles/surge-groups-family.conf` for `[Proxy Group]` and remotely include `profiles/surge-rules-family.dconf` for `[Rule]`.
 
-- AI → Taiwan by default;
-- Microsoft → DIRECT by default;
-- Netflix → Hong Kong by default;
-- Apple infrastructure → DIRECT;
-- Google / YouTube / Zoom and other unmatched overseas traffic → Hong Kong;
-- China IPv4 and IPv6 → DIRECT fallback.
+Family intentionally omits the Crypto policy while retaining AI Taiwan→Japan fallback, Apple/Microsoft choices, Netflix regional selection, Smart country pools, China DIRECT and Hong Kong FINAL.
 
-## Country groups
+## Production rule order
 
-Both Tower schemes create latency-selected country groups across all enabled airport subscriptions:
-
-- Hong Kong
-- Taiwan
-- Japan
-- Singapore
-- United States
-- Korea
-
-They also keep an all-node manual toolbox group.
-
-Country groups are `url-test`; `Crypto Critical` is deliberately a manual `select` over concrete Taiwan nodes so normal latency fluctuations do not change the financial-account exit IP.
-
-## Tower export mode
-
-For reliability, the recommended initial setting is to keep Tower's **“优先使用规则集” disabled**.
-
-That means:
-
-1. Tower downloads this scheme and its referenced lists when you explicitly import/refresh it;
-2. Tower keeps those resources locally;
-3. the generated Surge profile contains the converted rules locally;
-4. normal Surge operation does not require GitHub to be reachable.
-
-This avoids making `raw.githubusercontent.com` a runtime dependency from mainland networks.
-
-Remote RULE-SET emission can still be enabled later if a smaller generated profile is preferred.
-
-## IPv6
-
-Both schemes declare:
-
-```ini
-ipv6 = true
-```
-
-Tower currently models this setting, but it does not emit Surge's advanced VIF setting. After exporting the final Surge profile, add this once under `[General]`:
-
-```ini
-ipv6-vif = auto
-```
-
-This allows Surge to take over IPv6 only when the current network actually has working IPv6.
-
-All service/domain decisions stay above the China IPv4 and IPv6 fallback rules. This avoids an IP rule pre-empting a later domain rule and preserves the intended order:
+The My Profile uses this order:
 
 ```text
-service domains → CN IPv4 → CN IPv6 → FINAL Hong Kong
+Surge SYSTEM → DIRECT
+Surge LAN → DIRECT (no-resolve)
+
+v2fly category-cryptocurrency → Crypto / Taiwan
+AI → AI fallback
+Netflix → Netflix
+
+ACL4 UnBan / ad rules / GoogleCN / SteamCN
+ACL4 Microsoft → Microsoft
+ACL4 Apple → Apple
+ACL4 ProxyLite → Node Select
+ACL4 ChinaDomain → DIRECT
+ACL4 ChinaCompanyIp → DIRECT
+
+China IPv4 fallback → DIRECT
+China IPv6 fallback → DIRECT
+FINAL → Node Select, dns-failed
 ```
 
-## Upstream update policy
+Important details:
 
-Loyalsoldier publishes frequently. This repository does **not** automatically promote upstream changes to `main`.
+- `SYSTEM` and `LAN` are Surge-maintained internal rule sets and may improve as Surge itself updates.
+- Crypto, AI, Netflix, Apple, Microsoft and ProxyLite use `extended-matching` where useful so TLS SNI / HTTP Host can still classify connections whose target is an IP literal.
+- `FINAL,Node Select,dns-failed` lets the Hong Kong proxy resolve an otherwise-unmatched hostname remotely when local DNS fails during IP-rule evaluation.
+- domain/service rules stay above China IP fallbacks.
 
-The scheduled workflow:
+## Crypto source
 
-1. downloads the selected upstream files;
-2. performs sanity checks;
-3. compares them with the current mirror;
-4. creates or refreshes a review PR when something changed;
-5. never auto-merges the PR.
+The production Crypto rule is not the old manual `rules/Crypto-Critical.list`.
 
-`rules/Crypto-Critical.list` is never touched by upstream sync.
+It directly references `category-cryptocurrency` from `ImpXada/Geosite2Surge`, which converts the upstream `v2fly/domain-list-community` geosite data into Surge syntax on a daily workflow. This gives broad CEX / wallet / DeFi coverage without maintaining hundreds of domains locally.
 
-The pinned China IPv6 snapshot is intentionally not floating in V0.2. Moving it to a newer revision should be reviewed first; mirroring it through the same PR-gated upstream workflow is the planned next maintenance step.
+`rules/Crypto-Critical.list` remains in the repository only as a historical/reference list and is not loaded by V0.4 production routing.
 
-## Critical-rule maintenance policy
+## Public upstreams
 
-For sensitive manually curated lists:
+V0.4 directly follows mature upstream classification where appropriate:
 
-- prefer `DOMAIN-SUFFIX` / exact `DOMAIN`;
-- use a narrow `DOMAIN-KEYWORD` only when there is a clear technical reason;
-- do not add generic shared CDN, CAPTCHA, analytics or payment infrastructure merely because an app touched it.
+- v2fly `category-cryptocurrency` via Geosite2Surge;
+- ACL4SSR for Apple, Microsoft, ProxyLite, GoogleCN, ChinaDomain, ChinaCompanyIp and selected direct/ad lists;
+- reviewed China IPv4 mirror in `upstream/cncidr.txt`;
+- commit-pinned China IPv6 rules from Centralmatrix3/Matrix-io.
 
-CoinSpot, Swyftx and Coinbase AU are deliberately excluded from the Taiwan-oriented Crypto Critical policy; they belong to the separate Australia profile/workflow.
+Public low-risk classification can update automatically in Surge. High-risk secrets and airport subscriptions never enter GitHub.
 
 ## Security
 
@@ -169,4 +130,5 @@ Never commit:
 - airport/subscription URLs or tokens;
 - proxy node passwords;
 - private profile credentials;
-- MITM CA private material.
+- MITM CA private material;
+- HTTP API keys.
