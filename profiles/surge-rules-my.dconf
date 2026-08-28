@@ -27,13 +27,11 @@ RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Apple.li
 # Force known foreign / blocked services to proxy before any China-IP decision.
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ProxyLite.list,Node Select,extended-matching,update-interval=86400
 
-# China direct classification follows the proxy-exception layer.
+# China classification follows ACL4's mature domain/company-IP layers, then Surge's
+# auto-updated native GeoIP database. GEOIP handles both IPv4 and IPv6.
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaDomain.list,DIRECT,update-interval=86400
 RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaCompanyIp.list,DIRECT,update-interval=86400
+GEOIP,CN,DIRECT
 
-# CN IP fallbacks stay below all domain/service classification.
-RULE-SET,https://raw.githubusercontent.com/north-coding/Surge-Rules/main/upstream/cncidr.txt,DIRECT,update-interval=604800
-RULE-SET,https://raw.githubusercontent.com/Centralmatrix3/Matrix-io/454b1ba7b608d4879b3d01d743ca1e8febc1455c/Ruleset/Surge/ChinaIPv6.list,DIRECT,update-interval=604800
-
-# If local DNS fails during an IP-rule lookup, let the proxy resolve the unmatched hostname remotely.
+# If local DNS fails during the GeoIP lookup, let the proxy resolve the unmatched hostname remotely.
 FINAL,Node Select,dns-failed
