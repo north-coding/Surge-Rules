@@ -1,81 +1,108 @@
 # surge-rules
 
-Personal Surge routing rules and Tower-importable bootstrap schemes.
+Personal Surge policy/rule templates. This repository contains no airport subscription URL, proxy credential, private Host mapping, MITM material or other secret.
 
-## V0.4 architecture
+## V0.5 final workflow
 
-The production boundary is intentionally simple:
-
-- **Tower** owns airport subscriptions, multi-airport aggregation and concrete `[Proxy]` entries.
-- **Surge** owns policy groups, Smart selection, fallback behavior, built-in rule sets, GeoIP and production routing.
-- **GitHub** stores public routing templates and references; no subscription URL, node credential or secret belongs here.
-
-After Tower exports a profile, its generated `[Proxy Group]` and `[Rule]` sections are discarded. Surge uses the local policy-group template plus a remotely included rule section.
+The production workflow is intentionally simple and local-first:
 
 ```text
-Tower subscriptions
-      ↓
-concrete [Proxy] entries
-      ↓
-Surge include-all-proxies + regex
-      ↓
-Smart country pools / service groups
-      ↓
-Surge RULE-SET / GeoIP routing
+Nexitally official Surge profile
+        ↓ update while the temporary subscription window is open
+keep official managed profile untouched
+        ↓ duplicate locally in Surge
+remove #!MANAGED-CONFIG from the working copy
+        ↓
+keep latest provider [General] / [Proxy] / [Host] / other provider sections
+        ↓
+add the two IPv6 General lines
+        ↓
+replace [Proxy Group] + [Rule] with this repo's templates
+        ↓
+local daily Surge profile
 ```
+
+### Ownership boundary
+
+- **Nexitally** owns transport/network details: the latest `[Proxy]`, `[Host]`, provider-specific `[General]` settings such as QUIC/DNS/TUN behavior, and any other non-empty provider sections.
+- **This repository** owns only the stable policy layer: the IPv6 General patch, `[Proxy Group]`, and `[Rule]` templates.
+- **Surge** executes Smart/fallback policy groups, SYSTEM/LAN/GeoIP, and caches/updates external `RULE-SET` resources.
+- **Tower is not part of the Nexitally production path.** Parsing the provider subscription through Tower can discard provider-specific General/Host behavior. It can still be used independently for other subscriptions if useful.
+
+## Critical bootstrap rule
+
+Do **not** remotely include the whole `[Rule]` section or another profile from GitHub:
+
+```ini
+#!include https://...
+```
+
+The main working profile must stay local and independently loadable. A remote profile/include can create a bootstrap dependency when GitHub is inaccessible before Surge routing is active.
+
+External rule resources are different and remain normal Surge usage:
+
+```ini
+RULE-SET,https://...,Policy,update-interval=86400
+```
+
+They are independent cached resources rather than the structure of the main profile. Their refresh can fail independently without turning the working profile itself into a remote include.
+
+## Updating Nexitally
+
+When the provider subscription needs a refresh:
+
+1. open Nexitally and enable the temporary subscription window;
+2. update the untouched official Nexitally Surge profile;
+3. duplicate that newest official profile locally;
+4. remove the duplicate's `#!MANAGED-CONFIG ...` line so a later provider refresh cannot overwrite custom policy/rules;
+5. keep the newest provider `[General]`, `[Proxy]`, `[Host]` and any other provider-owned non-empty sections;
+6. add the two lines from `profiles/general-ipv6.patch.conf` to `[General]`;
+7. replace `[Proxy Group]` with the appropriate My or Family template;
+8. replace `[Rule]` with the appropriate My or Family template;
+9. validate the profile before making it daily-use.
+
+Do not carry an old `[Host]` forward blindly. The provider may change node-host mappings, so the latest official profile is always the source of truth for provider-owned sections.
 
 ## My Profile
 
-Tower bootstrap:
+Use:
 
-```text
-https://raw.githubusercontent.com/north-coding/Surge-Rules/main/profiles/tower-my.ini
-```
+- `profiles/general-ipv6.patch.conf`
+- `profiles/surge-groups-my.conf`
+- `profiles/surge-rules-my.conf`
 
-After export:
+Policy intent:
 
-1. keep Tower's `[Proxy]` section;
-2. replace `[Proxy Group]` with `profiles/surge-groups-my.conf`;
-3. replace `[Rule]` with:
+- ordinary overseas traffic → Hong Kong Smart;
+- AI → Taiwan Smart, Japan fallback;
+- Crypto → concrete Taiwan proxies only;
+- Microsoft → DIRECT by default, Hong Kong available manually;
+- Apple → DIRECT by default, Hong Kong available manually;
+- Netflix → Hong Kong by default, Singapore / US / Japan selectable;
+- all country pools use native Surge `smart` with `include-all-proxies=true` and regex filtering;
+- `Manual Select` contains every concrete provider proxy.
 
-```ini
-[Rule]
-#!include https://raw.githubusercontent.com/north-coding/Surge-Rules/main/profiles/surge-rules-my.dconf
-```
-
-4. confirm `[General]` contains:
-
-```ini
-ipv6 = true
-ipv6-vif = auto
-```
-
-### Policy intent
-
-- `Node Select` defaults to the Hong Kong Smart pool.
-- `AI` is a Surge `fallback`: Taiwan Smart first, Japan Smart second.
-- `Crypto` is a manual `select` over concrete Taiwan proxies only, plus `REJECT`; select one concrete Taiwan node and keep it pinned when a stable exchange exit IP matters.
-- `Microsoft` defaults DIRECT with Hong Kong available manually.
-- `Apple` defaults DIRECT with Hong Kong available manually.
-- `Netflix` defaults Hong Kong with Singapore / US / Japan alternatives.
-- country groups are native Surge `smart` groups populated with `include-all-proxies=true` and `policy-regex-filter`.
-- `Manual Select` automatically contains every concrete proxy.
+The Crypto classifier intentionally uses the cleaner v2fly `category-cryptocurrency` data converted for Surge by Geosite2Surge. It covers the core exchanges/wallet/Web3 ecosystem without trying to force every third-party analytics, fraud-detection or CDN request into the Crypto policy. A provider app may therefore have some auxiliary requests fall through to ordinary Hong Kong routing; that is intentional unless it causes a real functional problem.
 
 ## Family Profile
 
-Tower bootstrap:
+Use:
 
-```text
-https://raw.githubusercontent.com/north-coding/Surge-Rules/main/profiles/tower-family.ini
-```
+- `profiles/general-ipv6.patch.conf`
+- `profiles/surge-groups-family.conf`
+- `profiles/surge-rules-family.conf`
 
-Use `profiles/surge-groups-family.conf` for `[Proxy Group]` and remotely include `profiles/surge-rules-family.dconf` for `[Rule]`.
+Family intentionally omits Crypto. It retains:
 
-Family intentionally omits the Crypto policy while retaining AI Taiwan→Japan fallback, Apple/Microsoft choices, Netflix regional selection, Smart country pools, China DIRECT and Hong Kong FINAL.
+- ordinary overseas → Hong Kong Smart;
+- AI → Taiwan Smart → Japan fallback;
+- Microsoft / Apple → DIRECT by default;
+- Netflix regional selection;
+- China DIRECT and Hong Kong FINAL.
 
 ## Production rule order
 
-The My Profile uses this order:
+My Profile:
 
 ```text
 Surge LAN → DIRECT (no-resolve)
@@ -87,12 +114,12 @@ ACL4 GoogleFCM → Node Select
 ACL4 GoogleCN / SteamCN → DIRECT
 
 v2fly category-cryptocurrency → Crypto / Taiwan
-v2fly category-ai-!cn → AI fallback
+Nexitally Extra_AI → AI / Taiwan→Japan
 ACL4 Netflix → Netflix
 
 ACL4 Microsoft → Microsoft
 ACL4 Apple → Apple
-ACL4 ProxyLite → Node Select
+ACL4 ProxyLite → Node Select / Hong Kong
 ACL4 ChinaDomain → DIRECT
 ACL4 ChinaCompanyIp → DIRECT
 Surge GEOIP,CN → DIRECT
@@ -100,54 +127,78 @@ Surge GEOIP,CN → DIRECT
 FINAL → Node Select, dns-failed
 ```
 
-This intentionally follows ACL4's mature ordering principle: local/system safety first, unbreak/ad/direct exceptions early, GoogleFCM before the intentionally overlapping GoogleCN list, service-specific overrides before the general foreign-proxy layer, `ProxyLite` before all China IP decisions, then China domain/company-IP/GeoIP fallbacks, and FINAL last.
+Family is identical except the Crypto layer is omitted.
 
-Important details:
+The ordering follows ACL4's mature precedence principle: local/system safety first, unblock/ad/direct exceptions early, GoogleFCM before the overlapping GoogleCN layer, service-specific policies before broad foreign routing, `ProxyLite` before China IP decisions, then China domain/company-IP/GeoIP and FINAL last.
 
-- `SYSTEM` and `LAN` are Surge-maintained internal rule sets and may improve as Surge itself updates.
-- `GEOIP,CN` uses Surge's auto-updated MaxMind country database and handles both IPv4 and IPv6, so V0.4 no longer needs separate production China IPv4/IPv6 CIDR subscriptions.
-- Crypto, AI, Netflix, Apple, Microsoft, GoogleFCM and ProxyLite use `extended-matching` where useful so TLS SNI / HTTP Host can still classify connections whose target is an IP literal.
-- `FINAL,Node Select,dns-failed` lets the Hong Kong proxy resolve an otherwise-unmatched hostname remotely when local DNS fails during GeoIP evaluation.
-- domain/service rules stay above the GeoIP fallback.
-- AI stays above Microsoft so Copilot traffic follows the AI policy instead of the broader Microsoft policy.
+## Upstreams
 
-## Maintained upstreams
+Current production templates use:
 
-V0.4 minimizes locally maintained classification rules:
+- Surge native `SYSTEM`, `LAN` and `GEOIP,CN`;
+- ACL4SSR for UnBan, ad rules, GoogleFCM, GoogleCN, SteamCN, Netflix, Microsoft, Apple, ProxyLite, ChinaDomain and ChinaCompanyIp;
+- Geosite2Surge / v2fly `category-cryptocurrency` for the My Profile Crypto classifier;
+- Nexitally `Extra_AI` for AI classification.
 
-- v2fly `category-cryptocurrency` via Geosite2Surge for Crypto;
-- v2fly `category-ai-!cn` via Geosite2Surge for AI;
-- ACL4SSR for Netflix, Apple, Microsoft, ProxyLite, GoogleFCM, GoogleCN, SteamCN, ChinaDomain, ChinaCompanyIp, UnBan and ad rules;
-- Surge's own SYSTEM, LAN and auto-updated GeoIP database for platform/network baselines.
+The external rule URLs use `rawstatic.com`, matching the provider's deployed delivery pattern that has been verified in the current Surge profile. This is a delivery choice, not a guarantee that every network can always reach the mirror directly.
 
-Geosite2Surge is a mechanical converter that refreshes from `v2fly/domain-list-community` on a daily workflow, allowing Surge to consume v2fly categories without us copying hundreds of domains locally.
+Locally maintained lists under `rules/` remain historical/reference material only. Production routing does not depend on them.
 
-Telegram and ACL4 ProxyMedia are intentionally not loaded: in this profile they would route to the same `Node Select`/Hong Kong outcome as ordinary foreign traffic, while adding broader classification and another runtime dependency. Netflix remains explicit because it has a genuinely distinct selectable regional policy. GoogleFCM is kept because its precedence over GoogleCN changes behavior.
+## General settings
 
-The old local `rules/Crypto-Critical.list`, `rules/AI.list`, `rules/Netflix.list`, Apple/Microsoft focused lists and mirrored Loyalsoldier/ChinaIPv6 data may remain useful as historical/reference material, but V0.4 production routing does not depend on them.
+Do not replace the provider's entire `[General]` section with a generic template. Preserve the newest Nexitally values, including settings such as:
 
-Public classification resources can update automatically in Surge. High-risk secrets and airport subscriptions never enter GitHub.
+```text
+block-quic
+hijack-dns
+skip-proxy
+dns-server
+proxy-test-url
+tun-excluded-routes
+encrypted-dns-server
+use-local-host-item-for-proxy
+```
 
-## Installation validation
+Only ensure these two lines are present:
 
-Before making a newly exported profile the daily profile, verify in Surge that:
+```ini
+ipv6 = true
+ipv6-vif = auto
+```
 
-1. the Hong Kong, Taiwan and Japan Smart groups contain the expected concrete nodes;
-2. `Crypto` contains concrete Taiwan nodes and one is explicitly selected;
-3. `AI` resolves through Taiwan in normal conditions and can fall back to Japan;
-4. Apple system traffic such as `*.ls.apple.com` is DIRECT;
-5. ordinary Google traffic uses Hong Kong while GoogleCN-only traffic remains DIRECT;
-6. GoogleFCM/mtalk follows `Node Select` instead of being caught by GoogleCN;
-7. a normal mainland service is DIRECT and an unmatched foreign service falls to Hong Kong.
+The provider's `[Host]` must also be retained because `use-local-host-item-for-proxy = true` may make those mappings part of node resolution.
 
-This validation matters because Surge substitutes DIRECT if a policy group ends up with no usable members; the regex-built country groups therefore must be checked once after a new node naming scheme or airport is introduced.
+## Offline recovery note
+
+For manual recovery without AI, keep a local note containing the contents of:
+
+- `general-ipv6.patch.conf`;
+- `surge-groups-my.conf` and `surge-rules-my.conf`;
+- `surge-groups-family.conf` and `surge-rules-family.conf`.
+
+Do **not** treat an old saved `[Host]` or `[General]` as canonical. Copy those from the newest official provider profile each time.
+
+## Validation
+
+Before switching a newly rebuilt profile into daily use, check:
+
+1. Hong Kong, Taiwan and Japan Smart groups contain the expected nodes;
+2. My Profile Crypto contains concrete Taiwan nodes and exchange core requests such as Binance/Bybit/OKX can hit Taiwan;
+3. AI normally uses Taiwan and can fall back to Japan;
+4. Apple system traffic is DIRECT where expected;
+5. ordinary overseas traffic falls to Hong Kong;
+6. a normal mainland service is DIRECT;
+7. the profile starts normally and is not waiting on a remote `#!include`.
+
+QUIC requests showing `QUIC-BLOCK` are expected while the provider keeps `block-quic = all`; applications normally retry over HTTPS/TCP.
 
 ## Security
 
 Never commit:
 
 - airport/subscription URLs or tokens;
-- proxy node passwords;
-- private profile credentials;
+- proxy node host credentials or passwords;
+- a full private provider profile;
+- provider-specific private Host mappings if they expose subscription/node details;
 - MITM CA private material;
 - HTTP API keys.
