@@ -2,6 +2,8 @@
 
 Personal Surge policy/rule templates. This repository contains no airport subscription URL, proxy credential, private Host mapping, MITM material or other secret.
 
+中文操作手册：[`docs/NEXITALLY_SURGE_WORKFLOW_ZH.md`](docs/NEXITALLY_SURGE_WORKFLOW_ZH.md)。以后更新奶昔 Surge Profile 时，优先按这份中文流程操作。
+
 ## V0.5 final workflow
 
 The production workflow is intentionally simple and local-first:
